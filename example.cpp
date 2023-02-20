@@ -158,10 +158,22 @@ void getShader() {
   std::stringstream vfile;
   vfile << vshader.rdbuf();
   std::string vertex_source = vfile.str();
+
+  shader_program = glCreateProgram();
   
-  GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-  const char * vsource = vertex_source.c_str();
   int vlength = vertex_source.size();
+  if(vlength > 0) {
+    GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
+    const char * vsource = vertex_source.c_str();
+    glShaderSource(vertex_shader, 1, &vsource, &vlength);
+    glCompileShader(vertex_shader);
+    if(!check_shader_compile_status(vertex_shader)) {
+        std::cout << "\nvertex shader failed to compile" << std::endl;
+        exit(1);
+    }  
+    glAttachShader(shader_program, vertex_shader);
+  }
+
 
   // fragment shader
   std::ifstream fshader("fragment.glsl");
@@ -172,20 +184,19 @@ void getShader() {
   GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
   const char * fsource = fragment_source.c_str();
   int flength = fragment_source.size();
+  
+  if(flength > 0) {
+    glShaderSource(fragment_shader, 1, &fsource, &flength);
+    glCompileShader(fragment_shader);
+    if(!check_shader_compile_status(fragment_shader)) {
+        std::cout << "\nfragment shader failed to compile" << std::endl;
+        exit(1);
+    }  
+    glAttachShader(shader_program, fragment_shader);
+  }
 
-  glShaderSource(vertex_shader, 1, &vsource, &vlength);
-  glCompileShader(vertex_shader);
-  glShaderSource(fragment_shader, 1, &fsource, &flength);
-  glCompileShader(fragment_shader);
-
-  if(!check_shader_compile_status(vertex_shader)) {
-      std::cout << "\nvertex shader failed to compile" << std::endl;
-      exit(1);
-  }  
-
-  shader_program = glCreateProgram();
-  glAttachShader(shader_program, vertex_shader);
   glLinkProgram(shader_program);
+
   if(!check_program_link_status(shader_program)) {
       std::cout << "\nprogram linking failed" << std::endl;
       exit(1);
