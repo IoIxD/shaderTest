@@ -17,6 +17,7 @@
 #include <vector>
 
 GLuint shader_program, vertex_shader, fragment_shader;
+bool use_shader = false;
 
 bool check_shader_compile_status(GLuint obj) {
     GLint status;
@@ -152,7 +153,7 @@ Ball balls[] = {
 
 
 // Shader compilation
-void getShader() {
+void shaderCompile() {
   // vertex shader
   std::ifstream vshader("vertex.glsl");
   std::stringstream vfile;
@@ -161,6 +162,8 @@ void getShader() {
 
   shader_program = glCreateProgram();
   
+  use_shader = false;
+
   int vlength = vertex_source.size();
   if(vlength > 0) {
     GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
@@ -171,6 +174,7 @@ void getShader() {
         std::cout << "\nvertex shader failed to compile" << std::endl;
         exit(1);
     }  
+    use_shader = true;
     glAttachShader(shader_program, vertex_shader);
   }
 
@@ -192,6 +196,7 @@ void getShader() {
         std::cout << "\nfragment shader failed to compile" << std::endl;
         exit(1);
     }  
+    use_shader = true;
     glAttachShader(shader_program, fragment_shader);
   }
 
@@ -220,7 +225,12 @@ void init() {
 // position.
 void display() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  if(use_shader) {
+    glUseProgram(shader_program);
+  }
+  
   glLoadIdentity();
+  
   gluLookAt(camera.getX(), camera.getY(), camera.getZ(),
             checkerboard.centerx(), 0.0, checkerboard.centerz(),
             0.0, 1.0, 0.0);
@@ -279,7 +289,7 @@ int main(int argc, char** argv) {
     std::cout << "Machine does not support the 2.1 api\n" << std::endl;
     //exit(1); // or handle the error in a nicer way
   }
-  getShader();
+  shaderCompile();
   glutDisplayFunc(display);
   glutReshapeFunc(reshape);
   glutSpecialFunc(special);
