@@ -16,6 +16,37 @@
 #include <sstream>
 #include <vector>
 
+GLuint shader_program, vertex_shader, fragment_shader;
+
+bool check_shader_compile_status(GLuint obj) {
+    GLint status;
+    glGetShaderiv(obj, GL_COMPILE_STATUS, &status);
+    if(status == GL_FALSE) {
+        GLint length;
+        glGetShaderiv(obj, GL_INFO_LOG_LENGTH, &length);
+        std::vector<char> log(length);
+        glGetShaderInfoLog(obj, length, &length, &log[0]);
+        std::cout << &log[0];
+        return false;
+    }
+    return true;
+}
+
+// helper to check and display for shader linker error
+bool check_program_link_status(GLuint obj) {
+    GLint status;
+    glGetProgramiv(obj, GL_LINK_STATUS, &status);
+    if(status == GL_FALSE) {
+        GLint length;
+        glGetProgramiv(obj, GL_INFO_LOG_LENGTH, &length);
+        std::vector<char> log(length);
+        glGetProgramInfoLog(obj, length, &length, &log[0]);
+        std::cout << &log[0];
+        return false;
+    }
+    return true;
+}
+
 // Colors
 GLfloat WHITE[] = {1, 1, 1};
 GLfloat RED[] = {1, 0, 0};
@@ -119,34 +150,46 @@ Ball balls[] = {
   Ball(0.4, WHITE, 5, 1, 7)
 };
 
-bool check_shader_compile_status(GLuint obj) {
-    GLint status;
-    glGetShaderiv(obj, GL_COMPILE_STATUS, &status);
-    if(status == GL_FALSE) {
-        GLint length;
-        glGetShaderiv(obj, GL_INFO_LOG_LENGTH, &length);
-        vector<char> log(length);
-        glGetShaderInfoLog(obj, length, &length, &log[0]);
-        cout << &log[0];
-        return false;
-    }
-    return true;
-}
-
 
 // Shader compilation
 void getShader() {
-  std::ifstream shader("shader.glsl");
-  std::stringstream file;
-  file << shader.rdbuf();
-  std::string vertex_source = file.str();
+  // vertex shader
+  std::ifstream vshader("vertex.glsl");
+  std::stringstream vfile;
+  vfile << vshader.rdbuf();
+  std::string vertex_source = vfile.str();
   
   GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-  const char * source = vertex_source.c_str();
-  int length = vertex_source.size();
+  const char * vsource = vertex_source.c_str();
+  int vlength = vertex_source.size();
 
+  // fragment shader
+  std::ifstream fshader("fragment.glsl");
+  std::stringstream ffile;
+  ffile << fshader.rdbuf();
+  std::string fragment_source = ffile.str();
   
+  GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
+  const char * fsource = fragment_source.c_str();
+  int flength = fragment_source.size();
 
+  glShaderSource(vertex_shader, 1, &vsource, &vlength);
+  glCompileShader(vertex_shader);
+  glShaderSource(fragment_shader, 1, &fsource, &flength);
+  glCompileShader(fragment_shader);
+
+  if(!check_shader_compile_status(vertex_shader)) {
+      std::cout << "\nvertex shader failed to compile" << std::endl;
+      exit(1);
+  }  
+
+  shader_program = glCreateProgram();
+  glAttachShader(shader_program, vertex_shader);
+  glLinkProgram(shader_program);
+  if(!check_program_link_status(shader_program)) {
+      std::cout << "\nprogram linking failed" << std::endl;
+      exit(1);
+  }
 }
 
 // Application-specific initialization: Set up global lighting parameters
@@ -207,11 +250,25 @@ void special(int key, int, int) {
 
 // Initializes GLUT and enters the main loop.
 int main(int argc, char** argv) {
+  std::cout << "starting\n" << std::endl;
   glutInit(&argc, argv);
   glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
   glutInitWindowPosition(80, 80);
   glutInitWindowSize(800, 600);
   glutCreateWindow("Bouncing Balls");
+  GLenum err = glewInit();
+  if (err != GLEW_OK) {
+    std::cout << "GLEW ERROR\n" << std::endl;
+    std::cout << err << std::endl;
+    std::cout << "\n" << std::endl;
+    //exit(1);
+  }
+  if (!GLEW_VERSION_2_1)  {
+    // check that the machine supports the 2.1 API.
+    std::cout << "Machine does not support the 2.1 api\n" << std::endl;
+    //exit(1); // or handle the error in a nicer way
+  }
+  getShader();
   glutDisplayFunc(display);
   glutReshapeFunc(reshape);
   glutSpecialFunc(special);
