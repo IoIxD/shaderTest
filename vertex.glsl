@@ -1,3 +1,5 @@
+#version 330 compatibility
+
 /*
    Hyllian Smart-Blur Shader
   
@@ -81,7 +83,11 @@ uniform COMPAT_PRECISION float SB_BLUE_THRESHOLD;
 
 void main()
 {
-    gl_Position = MVPMatrix * VertexCoord;
+    //gl_Position = MVPMatrix * VertexCoord;
+    gl_Position = ftransform();
+    float dist = distance(gl_Vertex, gl_Position);
+    gl_FrontColor = (vec4(gl_Normal,1.0) * 2.0) / dist;
+
     TEX0.xy = TexCoord.xy;
     vec2 ps = vec2(1.0/TextureSize.x, 1.0/TextureSize.y);
     float dx = ps.x;

@@ -6,6 +6,9 @@
 // the animation interesting, and arrow keys move the camera for even more
 // fun.
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 #include <GL/glew.h>
 #include <GL/glut.h>
 #include <GL/gl.h>
@@ -118,6 +121,7 @@ public:
   double centerx() {return width / 2;}
   double centerz() {return depth / 2;}
   void create() {
+
     displayListId = glGenLists(1);
     glNewList(displayListId, GL_COMPILE);
     GLfloat lightPosition[] = {4, 3, 7, 1};
@@ -151,6 +155,23 @@ Ball balls[] = {
   Ball(0.4, WHITE, 5, 1, 7)
 };
 
+// PETER FUCKING GRIFFIN
+void PeterFuckingGriffin() {
+  unsigned int texture;
+  glGenTextures(1, &texture);
+  glBindTexture(GL_TEXTURE_2D, texture);
+  // set the texture wrapping/filtering options (on the currently bound texture object)
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+  int width, height, nrChannels;
+  unsigned char *data = stbi_load("Peter_Griffin.png", &width, &height, &nrChannels, 0);
+  
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+  glGenerateMipmap(GL_TEXTURE_2D);
+}
 
 // Shader compilation
 void shaderCompile() {
@@ -218,6 +239,7 @@ void init() {
   glMaterialf(GL_FRONT, GL_SHININESS, 30);
   glEnable(GL_LIGHTING);
   glEnable(GL_LIGHT0);
+
   checkerboard.create();
 }
 

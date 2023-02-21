@@ -1,3 +1,5 @@
+#version 330 compatibility
+
 /*
    Hyllian Smart-Blur Shader
   
